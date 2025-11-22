@@ -1,37 +1,56 @@
-// src/server.js
 import express from 'express';
+import cors from 'cors';
+import pino from 'pino-http';
+import 'dotenv/config';
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Логування часу
-app.use((req, res, next) => {
-  console.log(`Time: ${new Date().toLocaleString()}`);
-  next();
+app.use(express.json());
+app.use(cors());
+app.use(
+  pino({
+    level: 'info',
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        translateTime: 'HH:MM:ss',
+        ignore: 'pid,hostname',
+        messageFormat:
+          '{req.method} {req.url} {res.statusCode} - {responseTime}ms',
+        hideObject: true,
+      },
+    },
+  }),
+);
+
+app.get('/notes', (req, res) => {
+  res.status(200).json({ message: 'Retrieved all notes' });
 });
 
-// Кореневий маршрут
-app.get('/', (req, res) => {
-  res.status(200).json({ message: 'Hello, World!' });
+app.get('/notes/:noteId', (req, res) => {
+  const { noteId } = req.params;
+  res.status(200).json({ message: `Retrieved note with ID: ${noteId}` });
 });
 
-// Маршрут для тестування middleware помилки
-app.get('/test-error', (req, res) => {
-  // Штучна помилка для прикладу
-  throw new Error('Something went wrong');
+app.get('/test-error', () => {
+  throw new Error('Simulated server error');
 });
 
-// Middleware 404 (після всіх маршрутів)
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// Middleware для обробки помилок (останнє)
 app.use((err, req, res, next) => {
-  console.error('Error:', err.message);
+  console.error(err);
+
+  const isProd = process.env.NODE_ENV === 'production';
+
   res.status(500).json({
-    message: 'Internal Server Error',
-    error: err.message,
+    message: isProd
+      ? 'Something went wrong. Please try again later.'
+      : err.message,
   });
 });
 
