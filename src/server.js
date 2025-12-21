@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import router from './routes/notesRoutes.js';
 import authRouter from './routes/authRoutes.js';
 import cookieParser from 'cookie-parser';
+import userRouter from './routes/userRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -20,7 +21,7 @@ app.use(cookieParser());
 
 app.use(authRouter);
 app.use(router);
-
+app.use(userRouter);
 app.use(notFoundHandler);
 app.use(errors());
 app.use(errorHandler);
@@ -28,5 +29,5 @@ app.use(errorHandler);
 await connectMongoDB();
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`✅ Server is running on port ${PORT}`);
 });
